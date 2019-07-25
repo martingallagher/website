@@ -14,6 +14,7 @@ use actix_web::{
     web::*,
     Route,
 };
+use html5minify::minify;
 use lazy_static::lazy_static;
 use percent_encoding::percent_decode;
 use pulldown_cmark::{html::write_html, Event, Parser, Tag};
@@ -136,6 +137,10 @@ impl Website {
             preload_headers.push(http_preload("favicon.ico", "image")?);
         }
 
+        let mut minified = Vec::new();
+
+        minify(&mut output.as_slice(), &mut minified)?;
+
         Ok((
             if path == "index" { "/".into() } else { path },
             get().to(move || {
@@ -156,7 +161,7 @@ impl Website {
                     .header(X_FRAME_OPTIONS, "SAMEORIGIN")
                     .header(X_XSS_PROTECTION, "1; mode=block")
                     .content_type("text/html; charset=utf-8")
-                    .body(output.clone())
+                    .body(minified.clone())
             }),
         ))
     }

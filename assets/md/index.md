@@ -2,13 +2,13 @@
 <meta name=referrer content=unsafe-url>
 <meta name="theme-color" content="#369">
 
-<title>Martin Gallagher: Freelance Golang / Rust Developer / Software Engineer</title>
+<title>Martin Gallagher: Freelance Golang / Rust Developer</title>
 
 <header>
 
 # Martin Gallagher
 
-Consultant software engineer specializing in Google Go / Golang and Rust.
+Consultant / freelance software engineer specializing in Google Go and Rust development.
 
 - [![GitHub](/github.svg)](https://github.com/martingallagher)
 - [![LinkedIn](/linkedin.svg)](https://www.linkedin.com/in/martgallagher/)
