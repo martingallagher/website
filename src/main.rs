@@ -1,4 +1,8 @@
 #![feature(crate_visibility_modifier, test, try_trait)]
+#![warn(missing_docs)]
+#![deny(warnings, clippy::pedantic, clippy::nursery)]
+
+//! Simple MD to HTML website.
 
 mod config;
 mod error;
@@ -11,6 +15,7 @@ use crate::config::Config;
 use crate::error::Error;
 use crate::website::Website;
 
+#[allow(clippy::redundant_clone)]
 fn main() -> Result<(), Error> {
     let config = Config::new(::config::Environment::new())?;
     let address = &config.address.clone();

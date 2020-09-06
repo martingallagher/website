@@ -6,14 +6,12 @@ use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::str;
 
-use actix_web::{
-    http::header::{
-        HeaderValue, IntoHeaderValue, CONTENT_SECURITY_POLICY, LINK, REFERRER_POLICY,
-        STRICT_TRANSPORT_SECURITY, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS, X_XSS_PROTECTION,
-    },
-    web::*,
-    Route,
+use actix_web::http::header::{
+    HeaderValue, IntoHeaderValue, CONTENT_SECURITY_POLICY, LINK, REFERRER_POLICY,
+    STRICT_TRANSPORT_SECURITY, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS, X_XSS_PROTECTION,
 };
+use actix_web::web::{get, HttpResponse};
+use actix_web::Route;
 use html5minify::minify;
 use lazy_static::lazy_static;
 use percent_encoding::percent_decode;
@@ -28,48 +26,44 @@ lazy_static! {
     static ref RE_SVG: Regex = Regex::new(r#"\s+(version|xmlns)="[^"]+""#).unwrap();
 }
 
+/// A markdown to HTML website implementation.
 #[derive(Clone)]
-crate struct Website {
+pub struct Website {
     config: Config,
 }
 
 type ParseResult<'a> = Result<(Vec<Event<'a>>, Vec<HeaderValue>), Error>;
 
 impl Website {
-    crate fn new(config: Config) -> Self {
+    crate const fn new(config: Config) -> Self {
         Self { config }
     }
 
     crate fn routes(&self) -> Result<Vec<(String, Route)>, Error> {
-        let static_files = fs::read_dir(&self.config.static_dir)?
-            .map(|entry| Ok(entry?.path()))
-            .filter_map(|path: Result<_, Error>| {
-                let path = path.unwrap();
+        let mut static_files: HashSet<String> = HashSet::new();
 
-                if path.is_file() {
-                    return Some(path.file_name()?.to_str()?.into());
-                }
+        for entry in fs::read_dir(&self.config.static_dir)? {
+            let path = entry?.path();
 
-                None
-            })
-            .collect();
+            if path.is_file() {
+                static_files.insert(path.file_name()?.to_str()?.to_owned());
+            }
+        }
 
         let path = path_append(&self.config.assets_dir, "md");
-        let prefix = path.to_str()?.to_owned();
+        let prefix = path.to_str()?;
+        let md_ext = Some(OsStr::new("md"));
+        let mut routes = vec![];
 
-        fs::read_dir(&path)?
-            .map(|entry| Ok(entry?.path()))
-            .filter_map(|path: Result<_, Error>| {
-                let path = path.unwrap();
+        for entry in fs::read_dir(&path)? {
+            let path = entry?.path();
 
-                if path.is_file() && path.extension() == Some(OsStr::new("md")) {
-                    return Some(path);
-                }
+            if path.is_file() && path.extension() == md_ext {
+                routes.push(self.route(&path, &static_files, prefix)?);
+            }
+        }
 
-                None
-            })
-            .map(|path| self.route(&path, &static_files, &prefix))
-            .collect()
+        Ok(routes)
     }
 
     fn route(
@@ -89,7 +83,7 @@ impl Website {
         let css_file_name = {
             let file_name = path.clone() + ".css";
 
-            if static_files.contains(&file_name) {
+            if static_files.contains(file_name.as_str()) {
                 file_name
             } else {
                 "main.css".into()
@@ -125,7 +119,7 @@ impl Website {
 
         let js_file_name = &(path.clone() + ".js");
 
-        if static_files.contains(js_file_name) {
+        if static_files.contains(js_file_name.as_str()) {
             write_js(&mut output, js_file_name)?;
 
             if !self.config.disable_preload {
@@ -175,11 +169,11 @@ impl Website {
 
         for event in Parser::new(markdown) {
             match (&event, events.last(), &svg) {
-                (Event::Start(Tag::Image(_, ref src, ref title)), _, _) if src.starts_with('/') => {
+                (Event::Start(Tag::Image(_, ref src, ref title)), ..) if src.starts_with('/') => {
                     if self.config.enable_inline_svg && src.ends_with(".svg") {
                         let path = &path_append(
                             &self.config.static_dir,
-                            &percent_decode(&src[1..].as_bytes()).decode_utf8()?,
+                            &percent_decode(src[1..].as_bytes()).decode_utf8()?,
                         );
 
                         if file_size(path)? <= self.config.max_inline_size {
@@ -212,7 +206,7 @@ impl Website {
 
 /// Returns the content security policy for DEBUG and RELEASE builds.
 /// RELEASE assumes assets are limited to HTTPS.
-fn content_security_policy() -> &'static str {
+const fn content_security_policy() -> &'static str {
     if cfg!(debug_assertions) {
         "default-src * 'unsafe-inline'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'"
     } else {
@@ -276,14 +270,14 @@ fn import_urls<'a>(css: &'a str) -> Result<(Cow<'a, str>, Vec<String>), Error> {
 }
 
 fn inline_svg<P: AsRef<Path>>(path: P, title: &str) -> Result<String, Error> {
-    let svg = &read_to_string(path)?;
-    let svg = RE_SVG.replace_all(svg, "");
+    const NEEDLE: &str = "<svg";
+
+    let svg = read_to_string(path)?;
+    let svg = RE_SVG.replace_all(&svg, "");
 
     if title == "" || svg.contains("<title>") {
         return Ok(svg.into());
     }
-
-    const NEEDLE: &str = "<svg";
 
     let from = svg.find(NEEDLE)?;
     let tail = &svg[from + NEEDLE.len()..];

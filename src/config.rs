@@ -5,7 +5,7 @@ use serde::Deserialize;
 use crate::error::Error;
 
 #[derive(Clone, Debug, Deserialize)]
-crate struct Config {
+pub struct Config {
     #[serde(default = "default_address")]
     crate address: String,
     #[serde(default = "default_assets_dir")]
@@ -38,8 +38,7 @@ impl Config {
     /// Coerces a configuration source to a website config instance.
     crate fn new<T>(source: T) -> Result<Self, Error>
     where
-        T: 'static,
-        T: config::Source + Send + Sync,
+        T: config::Source + Send + Sync + 'static,
     {
         let mut config = config::Config::default();
 
