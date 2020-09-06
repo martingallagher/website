@@ -8,20 +8,22 @@ mod config;
 mod error;
 mod website;
 
+use std::io;
+
 use actix_files::Files;
 use actix_web::{App, HttpServer};
 
 use crate::config::Config;
-use crate::error::Error;
 use crate::website::Website;
 
 #[allow(clippy::redundant_clone)]
-fn main() -> Result<(), Error> {
-    let config = Config::new(::config::Environment::new())?;
+#[actix_rt::main]
+async fn main() -> io::Result<()> {
+    let config = Config::new(::config::Environment::new()).expect("Failed to get config");
     let address = &config.address.clone();
     let website = Website::new(config.clone());
 
-    Ok(HttpServer::new(move || {
+    HttpServer::new(move || {
         website
             .routes()
             .expect("Failed to get routes")
@@ -34,5 +36,6 @@ fn main() -> Result<(), Error> {
             )
     })
     .bind(address)?
-    .run()?)
+    .run()
+    .await
 }

@@ -40,23 +40,6 @@ Consultant / freelance software engineer specializing in Google Go and Rust deve
 
 2. <article>
 
-   ### [![VAT.me](/vat.me.svg)](https://vat.me/)
-
-   VAT.me is an online service providing VAT management for HMRC's "Make Tax Digital" (MTD) initiative. Backend API implemented using Golang with a vanilla TypeScript and Sass frontend. Infrastructure as code via Terraform with a Drone.io CI/CD pipeline deployed on Amazon AWS.
-
-   - Golang
-   - TypeScript
-   - Sass
-   - PostgreSQL
-   - Terraform
-   - AWS
-   - Drone.io
-   - Docker
-
-   </article>
-
-2. <article>
-
    ### ![Praegressus](/praegressus.svg)
 
    Technology service / software consultancy specializing in Agile development practices, microservices, TDD / test orientated design, scalable distributed systems and performance critical software development.
@@ -155,7 +138,7 @@ Consultant / freelance software engineer specializing in Google Go and Rust deve
 
    </article>
 
-5. <article>
+6. <article>
 
    ### ![GRI](/gri.svg)
 

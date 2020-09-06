@@ -5,8 +5,9 @@ authors = ["Martin Gallagher <martin@martingallagher.com>"]
 edition = "2018"
 
 [dependencies]
-actix-files = "0.1"
-actix-web = { version = "1.0", default-features = false }
+actix-files = "0.2"
+actix-rt = "1.0"
+actix-web = { version = "2.0", default-features = false }
 config = "0.10"
 cssparser = "0.27"
 html5minify = "0.2"

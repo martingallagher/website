@@ -5,7 +5,7 @@ use std::fmt;
 pub enum Error {
     Config(#[from] config::ConfigError),
     CssParse(String),
-    HeaderValue(#[from] actix_web::http::header::InvalidHeaderValueBytes),
+    HeaderValue(#[from] actix_web::http::header::InvalidHeaderValue),
     Io(#[from] std::io::Error),
     None,
     Regex(#[from] regex::Error),
